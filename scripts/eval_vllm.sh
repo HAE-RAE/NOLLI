@@ -1,5 +1,5 @@
 #!/bin/bash
-# Evaluate every task in data/data/ against a self-hosted vLLM server
+# Evaluate every task in data/ against a self-hosted vLLM server
 # (OpenAI-compatible /v1/chat/completions endpoint, e.g. `vllm serve <model>`).
 #
 # Usage:
@@ -23,7 +23,7 @@ echo ""
 SUCCESS_COUNT=0
 FAIL_COUNT=0
 
-for jsonl_path in data/data/*.jsonl; do
+for jsonl_path in data/*.jsonl; do
     task="$(basename "$jsonl_path" .jsonl)"
     echo "=== $task ==="
 

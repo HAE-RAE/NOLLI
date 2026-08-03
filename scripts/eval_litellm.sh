@@ -1,5 +1,5 @@
 #!/bin/bash
-# Evaluate every task in data/data/ against a cloud model via LiteLLM
+# Evaluate every task in data/ against a cloud model via LiteLLM
 # (covers OpenAI, Anthropic, Google/Gemini, OpenRouter — anything LiteLLM supports).
 #
 # Usage:
@@ -23,7 +23,7 @@ echo ""
 SUCCESS_COUNT=0
 FAIL_COUNT=0
 
-for jsonl_path in data/data/*.jsonl; do
+for jsonl_path in data/*.jsonl; do
     task="$(basename "$jsonl_path" .jsonl)"
     echo "=== $task ==="
 

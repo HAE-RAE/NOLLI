@@ -1,7 +1,6 @@
 #!/usr/bin/env bash
-# Regenerate data/data/*.jsonl from the generation/ scripts.
-# Each generator writes 100 items/difficulty (300/task) into data/jsonl/,
-# except where noted. Copy/move the outputs into data/data/ once verified.
+# Regenerate data/{task}_{tier}.jsonl from the generation/ scripts.
+# Each generator writes per-difficulty JSONL directly into data/.
 set -e
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -42,8 +41,7 @@ python generation/inequality_en.py --num 300
 echo ""; echo "[10/25] inequality_ko..."
 python generation/inequality_ko.py --num 300
 
-# kinship.py also writes a bare kinship_{diff}.jsonl; only the kinship_ko_*
-# split is part of the released dataset.
+# kinship.py writes kinship_ko_{easy,medium,hard}.jsonl
 echo ""; echo "[11/25] kinship_ko..."
 python generation/kinship.py --num 100
 
