@@ -1,0 +1,26 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Virtual Environment
+.venv/
+venv/
+.env
+
+# IDE
+.vscode/
+.idea/
+
+# macOS
+*.DS_Store
+.AppleDouble
+.LSOverride
+
+# eval outputs
+results/
+logs/
+
+# regeneration scratch output
+data/
