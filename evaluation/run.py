@@ -142,7 +142,7 @@ Available tasks: {', '.join(available_tasks)}
     parser.add_argument("--gen-kwargs", default=None, help="Generation params as key=value pairs (e.g. temperature=0.6,max_tokens=32768,reasoning=on)")
     parser.add_argument("--timeout", type=float, default=None, help="Request timeout in seconds (default: 120 for vllm, 600 for litellm)")
     parser.add_argument("--tasks", nargs="+", help="List of tasks to evaluate (all if not specified)")
-    parser.add_argument("--data-dir", default="data/data", help="Data directory path")
+    parser.add_argument("--data-dir", default="data", help="Data directory path")
     parser.add_argument("--output-dir", default="results", help="Output directory for results")
     parser.add_argument("--difficulty", help="Difficulty filter (easy/medium/hard)")
     parser.add_argument("--limit", type=int, help="Maximum number of puzzles to evaluate")

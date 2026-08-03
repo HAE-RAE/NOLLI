@@ -21,3 +21,7 @@ venv/
 # eval outputs
 results/
 logs/
+
+# generator staging (legacy); release files live directly in data/
+data/csv/
+data/jsonl/

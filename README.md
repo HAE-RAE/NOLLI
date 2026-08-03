@@ -113,12 +113,13 @@ Results are written to `results/{model}/{task}_{difficulty}/`.
 bash scripts/generate_dataset.sh
 ```
 
-Each `generation/*.py` is independently runnable (`python generation/sudoku_en.py --num 300`) and writes JSONL split by difficulty — but into `data/jsonl/` (and, for a couple of tasks, `data/csv/`), **not** `data/`. `data/` is the curated, QA'd snapshot actually used for evaluation; after regenerating and spot-checking, promote the files you want to release:
+Each `generation/*.py` is independently runnable (e.g. `python generation/sudoku_en.py --num 300`) and writes the release layout directly:
 
-```bash
-cp data/jsonl/sudoku_en_*.jsonl data/
+```
+data/{task}_{easy|medium|hard}.jsonl
 ```
 
+That is the same layout evaluation reads. Generators no longer write staging CSV/combined dumps under `data/csv/` or `data/jsonl/`.
 ## Data Format
 
 - `data/{task}_{difficulty}.jsonl` — one file per task x difficulty (`easy`/`medium`/`hard`), 100 items each.
@@ -129,7 +130,7 @@ cp data/jsonl/sudoku_en_*.jsonl data/
 ```
 NOLLI/
 ├── data/                    # 25 tasks x 3 difficulties = 75 JSONL files (7,500 items)
-├── generation/              # one generator per task/locale
+├── generation/              # one generator per task/locale (+ dataset_io helpers)
 ├── validators/              # dataset QA (solution-uniqueness audits)
 ├── evaluation/
 │   ├── core/                # BaseEvaluator, ResultHandler
