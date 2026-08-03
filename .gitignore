@@ -21,6 +21,3 @@ venv/
 # eval outputs
 results/
 logs/
-
-# regeneration scratch output
-data/
