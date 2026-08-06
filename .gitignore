@@ -25,3 +25,6 @@ logs/
 # generator staging (legacy); release files live directly in data/
 data/csv/
 data/jsonl/
+
+# Generated puzzle data — distributed via https://huggingface.co/datasets/HAERAE-HUB/NOLLI
+data/
