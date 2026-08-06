@@ -8,62 +8,42 @@ It contains **15 puzzle types** (**25 tasks**; **7,500 items**). Every item is p
 
 Tasks follow a three-level cross-lingual spectrum: **direct translations**, **script adaptations**, and **Korean-only** tasks.
 
-### Direct Translations (8 types; EN + KO)
+### 1. Direct Translations (8 types; EN + KO)
 
 Same generators and parameters in both languages, so gaps isolate presentation language.
 
-#### Array Formula
-Apply row/column aggregation formulas (SUM/MEAN/MAX/MIN, ...) to a 2D array in sequence and track intermediate results to derive the final value.
+| task | description | en (easy/med/hard) | ko (easy/med/hard) | total |
+|---|---|---|---|---|
+| `array_formula` | Apply row/column aggregation formulas (SUM/MEAN/MAX/...) to a 2D array in sequence | 100 / 100 / 100 | 100 / 100 / 100 | 600 |
+| `causal_dag` | Infer event-propagation time through a causal graph with per-edge delays | 100 / 100 / 100 | 100 / 100 / 100 | 600 |
+| `inequality` | CSP: place numbers 1..N satisfying inequality constraints (unique solution) | 100 / 100 / 100 | 100 / 100 / 100 | 600 |
+| `minesweeper` | Minesweeper with minimal hints preserving a unique solution | 100 / 100 / 100 | 100 / 100 / 100 | 600 |
+| `number_baseball` | Infer a hidden N-digit number from Strike/Ball hints | 100 / 100 / 100 | 100 / 100 / 100 | 600 |
+| `sat_puzzles` | Boolean satisfiability (CNF) framed as a natural-language scenario | 100 / 100 / 100 | 100 / 100 / 100 | 600 |
+| `sudoku` | 9x9 Sudoku with guaranteed-unique solutions | 100 / 100 / 100 | 100 / 100 / 100 | 600 |
+| `yacht_dice` | Assign 12 dice rolls to 12 scoring categories to maximize total score | 100 / 100 / 100 | 100 / 100 / 100 | 600 |
 
-#### Causal DAG
-Infer event-propagation time through a causal graph with per-edge delays. Ground truth via shortest path (Dijkstra) on a generated DAG; unique by construction.
-
-#### Inequality
-CSP: place numbers 1..N satisfying a set of inequality constraints. Uniqueness verified by backtracking.
-
-#### Minesweeper
-CSP-style minesweeper with minimal hints preserving a unique solution (backtracking-verified). Difficulty via grid size (6x6/8x8/10x10). Answers are mine coordinates.
-
-#### Number Baseball
-Infer a hidden N-digit number (no repeated digits) from Strike/Ball hints.
-
-#### SAT Puzzle
-Boolean satisfiability (CNF) framed as a natural-language scenario (crime, meetings, task assignment, ...). Backward-generated so the intended answer always satisfies every clause.
-
-#### Sudoku
-9x9 Sudoku with guaranteed-unique solutions, HMAC-based spot-check cell selection, optional rotation/reflection symmetry, reproducible via fixed seeds.
-
-#### Yacht Dice
-Assign 12 dice rolls to 12 scoring categories to maximize total score; ground truth via the Hungarian algorithm over the 12! assignment space.
-
-### Script Adaptations (2 types; EN + KO)
+### 2. Script Adaptations (2 types; EN + KO)
 
 Not translation-equivalent: English uses Roman letters; Korean uses Hangul *jamo*. Calibrated independently per language.
 
-#### Cipher
-Decode a stack of ciphers (Substitution, Vigenere, Reverse, Playfair, Transposition). Answers are random strings so linguistic guessing doesn't help; hint count scales with difficulty.
+| task | description | en (easy/med/hard) | ko (easy/med/hard) | total |
+|---|---|---|---|---|
+| `cipher` | Decode stacked ciphers (Substitution, Vigenere, Reverse, Playfair, Transposition) | 100 / 100 / 100 | 100 / 100 / 100 | 600 |
+| `cryptarithmetic` | Letters-for-digits arithmetic (SEND+MORE=MONEY style); Korean maps *jamo* groups | 100 / 100 / 100 | 100 / 100 / 100 | 600 |
 
-#### Cryptarithmetic
-Classic letters-for-digits arithmetic (e.g. SEND+MORE=MONEY). No leading zeros, each letter a unique digit, uniqueness verified by backtracking solver. Korean maps *jamo* groups rather than alphabet groups.
+### 3. Korean-Only (5 types; KO)
 
-### Korean-Only Tasks (5 types)
+No English counterpart — built on structures specific to the Korean language and culture
+(kinship terminology, the sexagenary calendar, traditional units, Hangul orthography).
 
-No English counterpart. Four are cultural; Jamo Composition is orthographic.
-
-#### Kinship
-Infer a Korean kinship term from a dialogue describing a chain of family relationships (paternal/maternal/in-law). Accepts synonym answers (e.g. 큰아버지/백부).
-
-#### Saju — Four Pillars / Manseryeok
-Given a birth date/time, compute the four 사주(四柱) pillars (연주/월주/일주/시주). Day/hour pillars require almanac facts (입춘 boundary, 절기, 월두법/시두법) that can't be reconstructed by reasoning alone. Ground truth: solar-longitude 절기 via `ephem`, cross-checked against `korean_lunar_calendar`.
-
-#### Time — Korean Calendar Reasoning
-From a Korean holiday anchor (새해 첫날, 어린이날, ...) and a relative-day expression (금일/명일/모레, ...), compute an offset date (or its 60갑자 일진). Pure calendar computation.
-
-#### Korean Units
-Convert mixed traditional Korean units (area/volume/length/weight — 평·마지기·되·자·냥, ...) using a conversion table given in the prompt (rates are randomized per problem, so memorized rates don't help), then compute a signed weighted sum.
-
-#### Jamo Composition
-Decompose a 한글 syllable into 초성/중성/종성, shift 초성 by a fixed offset, and recompose. Difficulty comes from 받침 structure (겹받침 for hard), not text length. Ground truth is pure Unicode composition arithmetic.
+| task | description | ko (easy/med/hard) | total |
+|---|---|---|---|
+| `jamo` | Decompose a Hangul syllable into 초성/중성/종성, shift 초성, recompose | 100 / 100 / 100 | 300 |
+| `kinship` | Infer a Korean kinship term from a chain of family relationships (26-way multiple choice) | 100 / 100 / 100 | 300 |
+| `korean_units` | Convert traditional Korean units (평·마지기·되·자·냥, ...) with randomized rates | 100 / 100 / 100 | 300 |
+| `saju` | Compute the four 사주(四柱) pillars from a birth date/time | 100 / 100 / 100 | 300 |
+| `time` | Korean calendar reasoning: holiday anchor + relative-day expression → date / 60갑자 일진 | 100 / 100 / 100 | 300 |
 
 ## Installation
 
@@ -103,6 +83,13 @@ cp .env.example .env
 #   OPENAI_API_KEY, ANTHROPIC_API_KEY, GEMINI_API_KEY, OPENROUTER_API_KEY
 ```
 
+## Evaluation Data
+
+Evaluation loads puzzles directly from the HuggingFace hub
+([HAERAE-HUB/NOLLI](https://huggingface.co/datasets/HAERAE-HUB/NOLLI)) — no local data files needed.
+Task names follow `{task}_{lang}[_{difficulty}]`: `sudoku_ko` runs all three tiers,
+`sudoku_ko_easy` runs one. To use locally generated jsonl files instead, pass `--data-dir data`.
+
 ## Model Calling
 
 Two backends, selected via `--model_router`:
@@ -127,7 +114,7 @@ python evaluation/run.py \
     --tasks sudoku_en_easy --async
 ```
 
-Or run every task in `data/` at once:
+Or run every task at once:
 
 ```bash
 MODEL=anthropic/claude-opus-4-8 bash scripts/eval_litellm.sh
@@ -157,7 +144,7 @@ data/{task}_{easy|medium|hard}.jsonl
 
 ```
 NOLLI/
-├── data/                    # 25 tasks × 3 difficulties = 75 JSONL files (7,500 items)
+├── data/                    # (generated locally; distributed via HAERAE-HUB/NOLLI on the HF hub)
 ├── generation/              # one generator per task/locale
 ├── validators/              # uniqueness audits
 ├── evaluation/
@@ -177,3 +164,17 @@ NOLLI/
 ## License
 
 MIT License — see [LICENSE](LICENSE).
+
+## Citation
+
+```bibtex
+@misc{choi2026nolli,
+      title={NOLLI: A Difficulty-Calibrated Puzzle Benchmark for Diagnosing the English-Korean Performance Gap},
+      author={Dasol Choi and Joonyong Park and Daegon Yu and Soo Yong Kim and Youngsook Song and Seunghyeok Hong},
+      year={2026},
+      eprint={2608.04397},
+      archivePrefix={arXiv},
+      primaryClass={cs.CL},
+      url={https://arxiv.org/abs/2608.04397},
+}
+```

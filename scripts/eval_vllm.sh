@@ -1,5 +1,6 @@
 #!/bin/bash
-# Evaluate every task in data/ against a self-hosted vLLM server
+# Evaluate every task/difficulty (data auto-downloaded from HAERAE-HUB/NOLLI
+# on the HuggingFace hub) against a self-hosted vLLM server
 # (OpenAI-compatible /v1/chat/completions endpoint, e.g. `vllm serve <model>`).
 #
 # Usage:
@@ -23,8 +24,11 @@ echo ""
 SUCCESS_COUNT=0
 FAIL_COUNT=0
 
-for jsonl_path in data/*.jsonl; do
-    task="$(basename "$jsonl_path" .jsonl)"
+TASKS="$(python -c 'from evaluation.evaluators import list_tasks; print(" ".join(list_tasks()))')"
+
+for base_task in $TASKS; do
+  for diff in easy medium hard; do
+    task="${base_task}_${diff}"
     echo "=== $task ==="
 
     if python evaluation/run.py \
@@ -39,6 +43,7 @@ for jsonl_path in data/*.jsonl; do
         FAIL_COUNT=$((FAIL_COUNT + 1))
     fi
     echo ""
+  done
 done
 
 echo "Done: $SUCCESS_COUNT succeeded, $FAIL_COUNT failed"

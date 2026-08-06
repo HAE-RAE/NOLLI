@@ -4,7 +4,7 @@ import logging
 import os
 import sys
 from pathlib import Path
-from typing import List, Dict, Optional
+from typing import List, Dict, Optional, Tuple
 from dotenv import load_dotenv
 
 logging.basicConfig(
@@ -25,6 +25,9 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 from evaluation.core import ResultHandler
 from evaluation.model import create_client
 from evaluation.evaluators import get_evaluator, list_tasks
+from evaluation.task_names import DIFFICULTY_SUFFIXES
+
+DEFAULT_HUB_DATASET = "HAERAE-HUB/NOLLI"
 
 
 def parse_gen_kwargs(raw: str) -> dict:
@@ -77,6 +80,71 @@ def load_puzzles(jsonl_path: Path) -> List[Dict]:
                     puzzles.append(json.loads(line))
                 except json.JSONDecodeError as e:
                     logger.warning(f"Failed to parse line {line_num}: {e}")
+    return puzzles
+
+
+def split_task_name(task_name: str) -> Tuple[str, Optional[str], Optional[str]]:
+    """'sudoku_ko_easy' -> ('sudoku', 'ko', 'easy'); 'kinship_ko' -> ('kinship', 'ko', None)."""
+    base = task_name
+    difficulty = None
+    for suf in DIFFICULTY_SUFFIXES:
+        if base.endswith(suf):
+            difficulty = suf[1:]
+            base = base[: -len(suf)]
+            break
+    language = None
+    for suf in ("_ko", "_en"):
+        if base.endswith(suf):
+            language = suf[1:]
+            base = base[: -len(suf)]
+            break
+    return base, language, difficulty
+
+
+_hub_cache: Dict[str, "object"] = {}
+
+
+def load_puzzles_from_hub(task_name: str, repo_id: str) -> List[Dict]:
+    """Load puzzles for a task (e.g. 'sudoku_ko_easy') from the HuggingFace hub.
+
+    The hub dataset has one config per base task with `language`/`difficulty`
+    columns; rows are converted back to the local jsonl puzzle shape
+    (kinship's `choices` is stored as a JSON string and decoded here).
+    """
+    from datasets import load_dataset  # local-only runs don't need the package
+
+    config, language, difficulty = split_task_name(task_name)
+    if language is None:
+        logger.warning(
+            f"Cannot infer language from task name '{task_name}' "
+            f"(expected a '_ko'/'_en' suffix). Skipping..."
+        )
+        return []
+
+    if config not in _hub_cache:
+        logger.info(f"Loading '{config}' from {repo_id}...")
+        try:
+            _hub_cache[config] = load_dataset(repo_id, config, split="test")
+        except Exception as e:
+            logger.warning(f"Failed to load '{config}' from {repo_id}: {e}")
+            _hub_cache[config] = None
+    ds = _hub_cache[config]
+    if ds is None:
+        return []
+
+    puzzles = []
+    for row in ds:
+        if row["language"] != language:
+            continue
+        if difficulty and row["difficulty"] != difficulty:
+            continue
+        puzzle = {
+            k: v for k, v in row.items()
+            if k not in ("task", "language") and v is not None
+        }
+        if isinstance(puzzle.get("choices"), str):
+            puzzle["choices"] = json.loads(puzzle["choices"])
+        puzzles.append(puzzle)
     return puzzles
 
 
@@ -142,7 +210,8 @@ Available tasks: {', '.join(available_tasks)}
     parser.add_argument("--gen-kwargs", default=None, help="Generation params as key=value pairs (e.g. temperature=0.6,max_tokens=32768,reasoning=on)")
     parser.add_argument("--timeout", type=float, default=None, help="Request timeout in seconds (default: 120 for vllm, 600 for litellm)")
     parser.add_argument("--tasks", nargs="+", help="List of tasks to evaluate (all if not specified)")
-    parser.add_argument("--data-dir", default="data", help="Data directory path")
+    parser.add_argument("--dataset", default=DEFAULT_HUB_DATASET, help=f"HuggingFace dataset to load puzzles from (default: {DEFAULT_HUB_DATASET})")
+    parser.add_argument("--data-dir", default=None, help="Load puzzles from local jsonl files in this directory instead of the HuggingFace hub")
     parser.add_argument("--output-dir", default="results", help="Output directory for results")
     parser.add_argument("--difficulty", help="Difficulty filter (easy/medium/hard)")
     parser.add_argument("--limit", type=int, help="Maximum number of puzzles to evaluate")
@@ -159,7 +228,7 @@ Available tasks: {', '.join(available_tasks)}
 
     script_dir = Path(__file__).parent
     project_root = script_dir.parent
-    data_dir = _normalize_path(args.data_dir, project_root)
+    data_dir = _normalize_path(args.data_dir, project_root) if args.data_dir else None
     output_dir = _normalize_path(args.output_dir, project_root)
 
     if args.limit is not None and args.limit < 0:
@@ -201,6 +270,10 @@ Available tasks: {', '.join(available_tasks)}
     else:
         logger.info(f"Mode: liteLLM")
     logger.info(f"Model: {args.model}")
+    if data_dir is not None:
+        logger.info(f"Data: local ({data_dir})")
+    else:
+        logger.info(f"Data: HuggingFace hub ({args.dataset})")
     logger.info(f"Tasks: {len(tasks)} tasks - {', '.join(tasks)}")
     if args.difficulty:
         logger.info(f"Difficulty filter: {args.difficulty}")
@@ -216,11 +289,16 @@ Available tasks: {', '.join(available_tasks)}
         logger.info(f"Task: {task_name}")
         logger.info("=" * 100)
 
-        data_path = data_dir / f"{task_name}.jsonl"
-        puzzles = load_puzzles(data_path)
+        if data_dir is not None:
+            data_path = data_dir / f"{task_name}.jsonl"
+            puzzles = load_puzzles(data_path)
+            source = str(data_path)
+        else:
+            puzzles = load_puzzles_from_hub(task_name, args.dataset)
+            source = f"{args.dataset}:{task_name}"
 
         if not puzzles:
-            logger.warning(f"No puzzles loaded from {data_path}. Skipping...")
+            logger.warning(f"No puzzles loaded from {source}. Skipping...")
             continue
 
         puzzles = filter_puzzles(puzzles, args.difficulty, args.limit)
