@@ -1,8 +1,20 @@
 # NOLLI
 
+  [![arXiv](https://img.shields.io/badge/arXiv-2608.04397-b31b1b.svg)](https://arxiv.org/abs/2608.04397)
+  <a href="https://huggingface.co/datasets/HAERAE-HUB/NOLLI" target="_blank"><img src=https://img.shields.io/badge/%F0%9F%A4%97%20-Hugging%20Face-yellow.svg></a>
+
+
 **NOLLI** blends Korean *놀이* (play) and *논리* (logic), naming both the reasoning the suite targets and the puzzle form in which it is tested. It is a difficulty-calibrated English–Korean benchmark for measuring where models fail across languages.
 
 It contains **15 puzzle types** (**25 tasks**; **7,500 items**). Every item is procedurally generated, seed-regenerable, and verified to have a unique solution. Difficulty is calibrated to target accuracy bands on a fixed reference model rather than by problem size alone.
+
+
+
+Evaluation code for HAERAE-Vision benchmark - a Korean visual QA dataset with real-world, under-specified questions.
+
+- **Paper**: [NOLLI: A Difficulty-Calibrated Puzzle Benchmark for Diagnosing the English-Korean Performance Gap
+](https://arxiv.org/abs/2608.04397) 
+- **Dataset**: [HAERAE-HUB/NOLLI](https://huggingface.co/datasets/HAERAE-HUB/NOLLI)
 
 ## Puzzle Types
 
