@@ -30,16 +30,16 @@ DIFFICULTY_CONFIG = {
         "cipher_stack": ["cho_shift", "jung_sub", "jong_shift", "reverse", "cho_shift", "jung_sub", "reverse", "jong_shift", "cho_shift", "jung_sub", "jong_shift", "reverse"],
         "keyword_logic": "positional",
         "hint_count": 0,
-        "answer_length": (7, 9),
-        "description": "Medium (Target ~50%): 12-layer Jamo Stack / Positional / Real Korean Words"
+        "answer_length": (4, 6),
+        "description": "Medium (Target ~50%): 12-layer Jamo Stack / Positional / 4-6-char Real Korean Words"
     },
     "LEVEL_2": {
         "name": "hard",
         "cipher_stack": ["cho_shift", "jung_sub", "jong_shift", "reverse", "cho_shift", "jung_sub", "reverse", "jong_shift", "cho_shift", "jung_sub", "jong_shift", "reverse"],
         "keyword_logic": "extraction",
         "hint_count": 0,
-        "answer_length": (8, 10),
-        "description": "Hard (Target ~25%): 12-layer Jamo Stack / Extraction / Real Korean Words"
+        "answer_length": (6, 8),
+        "description": "Hard (Target ~25%): 12-layer Jamo Stack / Extraction / 6-8-char Real Korean Words"
     }
 }
 
@@ -297,10 +297,11 @@ class HangulCipherGenerator:
                 ["통신", "보안", "최적화", "모델", "추론", "엔진", "기법", "생성", "연산", "검증", "증명", "평가", "검색", "수립", "시스템"],
             )
         ]
+        lengths = {cfg["name"]: cfg["answer_length"] for cfg in DIFFICULTY_CONFIG.values()}
         return {
-            "easy": self.filter_pool(easy, 8, 8),
-            "medium": self.filter_pool(medium, 4, 6),
-            "hard": self.filter_pool(hard, 6, 8),
+            "easy": self.filter_pool(easy, *lengths["easy"]),
+            "medium": self.filter_pool(medium, *lengths["medium"]),
+            "hard": self.filter_pool(hard, *lengths["hard"]),
         }
 
     def filter_pool(self, words: List[str], min_len: int, max_len: int) -> List[str]:
