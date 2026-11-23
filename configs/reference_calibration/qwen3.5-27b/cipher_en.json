@@ -1,0 +1,72 @@
+{
+  "task": "cipher_en",
+  "reference_model": "qwen/qwen3.5-27b",
+  "evaluation": {
+    "model": "openrouter/qwen/qwen3.5-27b",
+    "model_router": "litellm",
+    "gen_kwargs": "temperature=0.6,top_p=0.95,top_k=20,max_tokens=32768"
+  },
+  "target_accuracy_band_pct": {
+    "easy": [
+      65,
+      85
+    ],
+    "medium": [
+      40,
+      60
+    ],
+    "hard": [
+      15,
+      35
+    ]
+  },
+  "min_adjacent_tier_gap_pp": 10,
+  "tiers": {
+    "easy": {
+      "candidate": "cipher-E1",
+      "n": 100,
+      "seed_base": 7100000,
+      "override": {
+        "answer_length": [
+          6,
+          10
+        ]
+      },
+      "reference_result": {
+        "correct": 73,
+        "n": 100,
+        "first50_correct": 37,
+        "last50_correct": 36
+      }
+    },
+    "medium": {
+      "candidate": "cipher-M2",
+      "n": 100,
+      "seed_base": 7200000,
+      "override": {
+        "answer_length": [
+          10,
+          14
+        ]
+      },
+      "reference_result": {
+        "correct": 55,
+        "n": 100,
+        "first50_correct": 27,
+        "last50_correct": 28
+      }
+    },
+    "hard": {
+      "candidate": "cipher-H-orig",
+      "n": 100,
+      "seed_base": 7300000,
+      "override": {},
+      "reference_result": {
+        "correct": 22,
+        "n": 100,
+        "first50_correct": 14,
+        "last50_correct": 8
+      }
+    }
+  }
+}
