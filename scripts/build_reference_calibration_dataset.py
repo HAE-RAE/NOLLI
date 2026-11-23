@@ -9,11 +9,16 @@ generators:
                     or --mix to combine several override recipes within one tier; the answer word
                     pool stays the tier's pool, built from DIFFICULTY_CONFIG when the generator is
                     created, so answer_length is not an override lever)
+  - time_ko       : generation/time_ko.py        (override {"mix": {output_type: probability}})
+  - causal_dag_en : generation/causal_dag_en.py  (override keys of the tier config; num_events
+                    is given as an inclusive [min, max] range)
 
 Seed of item i = seed_base + i (i from --start, default 0). With the original seed bases
-(cipher_en 4000/4100/4200, cipher_ko 5000/5100/5200) and no override, the output equals what the generator script writes
-to data/<task>_<tier>.jsonl. Generate those files first with the release size
-(`python generation/cipher_en.py --num 100`, `cipher_ko.py --num 100`; 100 per tier),
+(cipher_en 4000/4100/4200, cipher_ko 5000/5100/5200, time_ko 1000000/2000000/3000000,
+causal_dag_en 0/1000/2000) and no override, the output equals what the generator script writes
+to data/<task>_<tier>.jsonl. Generate those files first with the release sizes
+(`python generation/cipher_en.py --num 100`, `cipher_ko.py --num 100` -- per tier;
+`time_ko.py --num 300`, `causal_dag_en.py --num 300` -- total over the three tiers),
 then run with --check-original.
 
 Settings can be given on the command line (--n/--seed-base/--override/--mix) or read from a
@@ -47,6 +52,8 @@ TIERS = ["easy", "medium", "hard"]
 ORIGINAL_SEED_BASE = {
     "cipher_en": {"easy": 4000, "medium": 4100, "hard": 4200},
     "cipher_ko": {"easy": 5000, "medium": 5100, "hard": 5200},
+    "time_ko": {"easy": 1_000_000, "medium": 2_000_000, "hard": 3_000_000},
+    "causal_dag_en": {"easy": 0, "medium": 1000, "hard": 2000},
 }
 CIPHER_LEVEL = {"easy": "LEVEL_0", "medium": "LEVEL_1", "hard": "LEVEL_2"}
 CIPHER_KO_LEVERS = ("cipher_stack", "keyword_logic", "hint_count")
@@ -71,6 +78,20 @@ def _resolve_config(task, tier, override):
             cfg[k] = v
         cfg["name"] = tier  # the answer word pool stays tied to the tier
         return cfg
+    if task == "time_ko":
+        import time_ko
+        cfg = copy.deepcopy(time_ko.DIFFICULTY_CONFIGS[tier])
+        for k, v in (override or {}).items():
+            if k != "mix":
+                raise KeyError("time_ko: only 'mix' can be overridden")
+            if abs(sum(v.values()) - 1.0) > 1e-9:
+                raise ValueError(f"time_ko: mix must sum to 1, got {sum(v.values())}")
+            cfg["mix"] = v
+        return cfg
+    if task == "causal_dag_en":
+        # the tier config lives inside generate_puzzle(); overrides are passed through as config_override
+        return {"tier_config": f"causal_dag_en.CausalPuzzleGenerator.generate_puzzle['{tier}']",
+                "config_override": override or None}
     raise ValueError(f"unknown task {task}")
 
 
@@ -155,6 +176,22 @@ def _generate(task, tier, cfg, n, seed_base, start=0):
                     "solution": prob["solution"],
                     "difficulty": tier,
                 })
+    elif task == "time_ko":
+        import time_ko
+        for i in range(start, start + n):
+            items.append(time_ko.generate_problem(tier, i, seed=seed_base + i, mix=cfg["mix"]))
+    elif task == "causal_dag_en":
+        import causal_dag_en
+        gen = causal_dag_en.CausalPuzzleGenerator()
+        for i in range(start, start + n):
+            p = gen.generate_puzzle(tier, seed=seed_base + i, config_override=cfg["config_override"])
+            items.append({
+                "id": f"causal_dag_en_{tier}_{i:04d}",
+                "question": causal_dag_en.create_question(p),
+                "answer": str(p.answer),
+                "solution": causal_dag_en._build_causal_dag_solution_en(p),
+                "difficulty": tier,
+            })
     return items
 
 

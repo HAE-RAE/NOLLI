@@ -200,13 +200,15 @@ DIFFICULTY_CONFIGS = {
 _SEED_BASE = {"easy": 1_000_000, "medium": 2_000_000, "hard": 3_000_000}
 
 
-def generate_problem(difficulty: str, problem_id: int = 0, seed: Optional[int] = None) -> Dict:
+def generate_problem(difficulty: str, problem_id: int = 0, seed: Optional[int] = None,
+                     mix: Optional[Dict[str, float]] = None) -> Dict:
     """확정 DIFFICULTY_CONFIGS 로 한 문제 생성(표준 스키마: id/question/answer/solution/difficulty).
 
     각 샘플마다 출력유형을 혼합비대로 추첨(출력유형별 난이도가 bimodal 이라 비율로 정답률 조절).
+    mix 를 주면 DIFFICULTY_CONFIGS[difficulty]["mix"] 대신 사용(다른 reference 모델 재보정용).
     """
     rng = random.Random(_SEED_BASE.get(difficulty, 0) + problem_id if seed is None else seed)
-    mix = DIFFICULTY_CONFIGS[difficulty]["mix"]
+    mix = mix if mix is not None else DIFFICULTY_CONFIGS[difficulty]["mix"]
     r, cum, output = rng.random(), 0.0, list(mix)[-1]
     for otype, p in mix.items():
         cum += p

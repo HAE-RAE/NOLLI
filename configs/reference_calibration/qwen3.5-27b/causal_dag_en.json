@@ -1,0 +1,123 @@
+{
+  "task": "causal_dag_en",
+  "reference_model": "qwen/qwen3.5-27b",
+  "evaluation": {
+    "model": "openrouter/qwen/qwen3.5-27b",
+    "model_router": "litellm",
+    "gen_kwargs": "temperature=0.6,top_p=0.95,top_k=20,max_tokens=32768"
+  },
+  "target_accuracy_band_pct": {
+    "easy": [
+      65,
+      85
+    ],
+    "medium": [
+      40,
+      60
+    ],
+    "hard": [
+      15,
+      35
+    ]
+  },
+  "min_adjacent_tier_gap_pp": 10,
+  "tiers": {
+    "easy": {
+      "candidate": "cfx-E1",
+      "n": 100,
+      "seed_base": 7120000,
+      "override": {
+        "num_events": [
+          40,
+          46
+        ],
+        "edge_density": 0.88,
+        "delay_range": [
+          20,
+          140
+        ],
+        "max_out_degree": 4,
+        "and_probability": 0.63,
+        "target_quantile": [
+          0.7,
+          0.94
+        ],
+        "query_weights": {
+          "occurrence_time": 0.03,
+          "time_gap": 0.22,
+          "count_by_target_time": 0.75
+        }
+      },
+      "reference_result": {
+        "correct": 71,
+        "n": 100,
+        "first50_correct": 35,
+        "last50_correct": 36
+      }
+    },
+    "medium": {
+      "candidate": "cfx-M2",
+      "n": 100,
+      "seed_base": 7220000,
+      "override": {
+        "num_events": [
+          40,
+          46
+        ],
+        "edge_density": 0.95,
+        "delay_range": [
+          30,
+          240
+        ],
+        "max_out_degree": 5,
+        "and_probability": 0.64,
+        "target_quantile": [
+          0.64,
+          0.94
+        ],
+        "query_weights": {
+          "time_gap": 0.2,
+          "count_by_target_time": 0.8
+        }
+      },
+      "reference_result": {
+        "correct": 60,
+        "n": 100,
+        "first50_correct": 29,
+        "last50_correct": 31
+      }
+    },
+    "hard": {
+      "candidate": "cfx-H1",
+      "n": 100,
+      "seed_base": 7320000,
+      "override": {
+        "num_events": [
+          62,
+          72
+        ],
+        "edge_density": 0.95,
+        "delay_range": [
+          30,
+          240
+        ],
+        "max_out_degree": 5,
+        "and_probability": 0.64,
+        "target_quantile": [
+          0.64,
+          0.94
+        ],
+        "query_weights": {
+          "time_gap": 0.2,
+          "count_by_target_time": 0.8
+        }
+      },
+      "reference_result": {
+        "correct": 21,
+        "n": 100,
+        "first50_correct": 14,
+        "last50_correct": 7
+      }
+    }
+  }
+}

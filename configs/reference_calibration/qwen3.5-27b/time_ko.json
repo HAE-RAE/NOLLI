@@ -1,0 +1,77 @@
+{
+  "task": "time_ko",
+  "reference_model": "qwen/qwen3.5-27b",
+  "evaluation": {
+    "model": "openrouter/qwen/qwen3.5-27b",
+    "model_router": "litellm",
+    "gen_kwargs": "temperature=0.6,top_p=0.95,top_k=20,max_tokens=32768"
+  },
+  "target_accuracy_band_pct": {
+    "easy": [
+      65,
+      85
+    ],
+    "medium": [
+      40,
+      60
+    ],
+    "hard": [
+      15,
+      35
+    ]
+  },
+  "min_adjacent_tier_gap_pp": 10,
+  "tiers": {
+    "easy": {
+      "candidate": "time-E2",
+      "n": 100,
+      "seed_base": 7100000,
+      "override": {
+        "mix": {
+          "ganji": 0.17,
+          "date": 0.83
+        }
+      },
+      "reference_result": {
+        "correct": 77,
+        "n": 100,
+        "first50_correct": 38,
+        "last50_correct": 39
+      }
+    },
+    "medium": {
+      "candidate": "time-M2",
+      "n": 100,
+      "seed_base": 7200000,
+      "override": {
+        "mix": {
+          "ganji": 0.46,
+          "weekday": 0.54
+        }
+      },
+      "reference_result": {
+        "correct": 51,
+        "n": 100,
+        "first50_correct": 27,
+        "last50_correct": 24
+      }
+    },
+    "hard": {
+      "candidate": "time-H2",
+      "n": 100,
+      "seed_base": 7300000,
+      "override": {
+        "mix": {
+          "ganji": 0.76,
+          "date": 0.24
+        }
+      },
+      "reference_result": {
+        "correct": 27,
+        "n": 100,
+        "first50_correct": 12,
+        "last50_correct": 15
+      }
+    }
+  }
+}
