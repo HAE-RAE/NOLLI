@@ -152,14 +152,19 @@ class CausalPuzzleGenerator:
             ]
         }
     
-    def generate_puzzle(self, difficulty: str, seed: Optional[int] = None) -> CausalPuzzle:
+    def generate_puzzle(self, difficulty: str, seed: Optional[int] = None,
+                        config_override: Optional[Dict] = None) -> CausalPuzzle:
         """
         Generate a causal reasoning puzzle
-        
+
         Args:
             difficulty: 'easy', 'medium', or 'hard'
             seed: Random seed for reproducibility
-        
+            config_override: optional lever values replacing the tier config
+                (for re-calibrating against another reference model). 'num_events'
+                is given as an inclusive (min, max) range. Default (None) leaves the
+                tier config and the random stream unchanged.
+
         Returns:
             CausalPuzzle with unique solution
         """
@@ -213,7 +218,19 @@ class CausalPuzzleGenerator:
                 'shuffle_edges': True,
             }
         }[difficulty]
-        
+
+        if config_override:
+            config = dict(config)
+            for key, value in config_override.items():
+                if key not in config:
+                    raise KeyError(f"unknown causal_dag lever '{key}'")
+                if key == 'num_events':
+                    config[key] = random.randint(value[0], value[1])
+                elif isinstance(value, list):
+                    config[key] = tuple(value)
+                else:
+                    config[key] = value
+
         max_attempts = 100
         for attempt in range(max_attempts):
             try:
@@ -455,7 +472,10 @@ class CausalPuzzleGenerator:
                     )
                 
                 # Check if all prerequisites have arrived
-                all_prereqs_arrived = all(
+                # (OR fires as soon as the FIRST prerequisite arrives, as the puzzle text
+                #  states; only AND waits for all. Waiting for all prerequisites on OR made
+                #  late, retroactive updates that were never propagated downstream.)
+                all_prereqs_arrived = edge.condition != 'AND' or all(
                     prereq in arrivals
                     for prereq in from_events
                 )
@@ -473,6 +493,7 @@ class CausalPuzzleGenerator:
                         trigger_time_for_event = min(
                             arrivals[prereq]
                             for prereq in from_events
+                            if prereq in arrivals
                         )
                     
                     # Update if this is earlier than current best
@@ -712,11 +733,11 @@ def _reach_time_trace_en(puzzle: CausalPuzzle) -> tuple:
             pa = prereq_arrival[edge_idx]
             if ce not in pa or at < pa[ce]:
                 pa[ce] = at
-            if all(p in pa for p in fes):
+            if edge.condition != 'AND' or all(p in pa for p in fes):  # OR: first arrival fires
                 if edge.condition == 'AND':
                     tt = max(pa[p] for p in fes)
                 else:
-                    tt = min(pa[p] for p in fes)
+                    tt = min(pa[p] for p in fes if p in pa)
                 if tt < earliest[edge.to_event]:
                     earliest[edge.to_event] = tt
                     resolver[edge.to_event] = edge

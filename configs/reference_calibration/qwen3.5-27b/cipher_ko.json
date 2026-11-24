@@ -1,0 +1,116 @@
+{
+  "task": "cipher_ko",
+  "reference_model": "qwen/qwen3.5-27b",
+  "evaluation": {
+    "model": "openrouter/qwen/qwen3.5-27b",
+    "model_router": "litellm",
+    "gen_kwargs": "temperature=0.6,top_p=0.95,top_k=20,max_tokens=32768"
+  },
+  "target_accuracy_band_pct": {
+    "easy": [
+      65,
+      85
+    ],
+    "medium": [
+      40,
+      60
+    ],
+    "hard": [
+      15,
+      35
+    ]
+  },
+  "min_adjacent_tier_gap_pp": 10,
+  "tiers": {
+    "easy": {
+      "candidate": "ko-mixA-E",
+      "n": 100,
+      "seed_base": 7130000,
+      "mix": {
+        "total": 100,
+        "parts": [
+          {
+            "label": "rev",
+            "count": 80,
+            "override": {
+              "cipher_stack": [
+                "reverse"
+              ]
+            }
+          },
+          {
+            "label": "orig",
+            "count": 20,
+            "override": {}
+          }
+        ]
+      },
+      "reference_result": {
+        "correct": 75,
+        "n": 100,
+        "first50_correct": 36,
+        "last50_correct": 39
+      }
+    },
+    "medium": {
+      "candidate": "ko-mixA-M",
+      "n": 100,
+      "seed_base": 7230000,
+      "mix": {
+        "total": 100,
+        "parts": [
+          {
+            "label": "rev",
+            "count": 54,
+            "override": {
+              "cipher_stack": [
+                "reverse"
+              ]
+            }
+          },
+          {
+            "label": "orig",
+            "count": 46,
+            "override": {}
+          }
+        ]
+      },
+      "reference_result": {
+        "correct": 53,
+        "n": 100,
+        "first50_correct": 26,
+        "last50_correct": 27
+      }
+    },
+    "hard": {
+      "candidate": "ko-mixA-H",
+      "n": 100,
+      "seed_base": 7330000,
+      "mix": {
+        "total": 100,
+        "parts": [
+          {
+            "label": "rev",
+            "count": 27,
+            "override": {
+              "cipher_stack": [
+                "reverse"
+              ]
+            }
+          },
+          {
+            "label": "orig",
+            "count": 73,
+            "override": {}
+          }
+        ]
+      },
+      "reference_result": {
+        "correct": 25,
+        "n": 100,
+        "first50_correct": 13,
+        "last50_correct": 12
+      }
+    }
+  }
+}

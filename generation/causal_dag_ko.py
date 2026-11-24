@@ -454,7 +454,10 @@ class CausalPuzzleGenerator:
                     )
                 
                 # 모든 전제 조건이 도달했는지 확인
-                all_prereqs_arrived = all(
+                # (OR fires as soon as the FIRST prerequisite arrives, as the puzzle text
+                #  states; only AND waits for all. Waiting for all prerequisites on OR made
+                #  late, retroactive updates that were never propagated downstream.)
+                all_prereqs_arrived = edge.condition != 'AND' or all(
                     prereq in arrivals
                     for prereq in from_events
                 )
@@ -472,6 +475,7 @@ class CausalPuzzleGenerator:
                         trigger_time_for_event = min(
                             arrivals[prereq]
                             for prereq in from_events
+                            if prereq in arrivals
                         )
                     
                     # 현재 최선보다 빠르면 업데이트
@@ -711,11 +715,11 @@ def _reach_time_trace_ko(puzzle: CausalPuzzle) -> tuple:
             pa = prereq_arrival[edge_idx]
             if ce not in pa or at < pa[ce]:
                 pa[ce] = at
-            if all(p in pa for p in fes):
+            if edge.condition != 'AND' or all(p in pa for p in fes):  # OR: first arrival fires
                 if edge.condition == 'AND':
                     tt = max(pa[p] for p in fes)
                 else:
-                    tt = min(pa[p] for p in fes)
+                    tt = min(pa[p] for p in fes if p in pa)
                 if tt < earliest[edge.to_event]:
                     earliest[edge.to_event] = tt
                     resolver[edge.to_event] = edge

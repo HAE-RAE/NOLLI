@@ -39,14 +39,14 @@ Answer: [숫자]
         response = response.strip()
         answer_text = self._extract_final_answer_text(response) or response
         
-        # Pattern 1: Just a number
-        if answer_text.isdigit():
+        # Pattern 1: Just a number (a time_gap answer can be negative)
+        if re.fullmatch(r'-?\d+', answer_text):
             return int(answer_text)
         
-        # Pattern 2: "Answer: 45" or "answer: 45"
-        match = re.search(r'[Aa]nswer\s*[:：]\s*(\d+)', answer_text)
-        if match:
-            return int(match.group(1))
+        # Pattern 2: "Answer: 45", "Answer: -11", "**Answer:** 45" (last occurrence)
+        matches = list(re.finditer(r'[Aa]nswer\s*\**\s*[:：]\s*\**\s*(-?\d+)', answer_text))
+        if matches:
+            return int(matches[-1].group(1))
         
         # Pattern 3: "event X first occurs at minute 45" or "occurs at minute 45"
         matches = list(re.finditer(r'(?:first\s+)?occurs?\s+at\s+minute\s+(\d+)', answer_text, re.IGNORECASE))
