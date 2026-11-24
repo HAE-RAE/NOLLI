@@ -5,7 +5,11 @@ from ..core.base import BaseEvaluator
 
 _GAN = "갑을병정무기경신임계"
 _JI = "자축인묘진사오미신유술해"
-_GANJI_RE = re.compile(rf"[{_GAN}][{_JI}]")
+_GAN_HANJA = "甲乙丙丁戊己庚辛壬癸"
+_JI_HANJA = "子丑寅卯辰巳午未申酉戌亥"
+_HANJA_TO_HANGUL = str.maketrans(_GAN_HANJA + _JI_HANJA, _GAN + _JI)
+# Hangul (신사) or Hanja (辛巳) day pillar. The term "60갑자"/"육십갑자" is not an answer.
+_GANJI_RE = re.compile(rf"(?<!60)(?<!육십)[{_GAN}{_GAN_HANJA}][{_JI}{_JI_HANJA}]")
 _WEEKDAY_RE = re.compile(r"[월화수목금토일]요일")
 _DATE_RE = re.compile(r"(\d{3,4})\s*[.\-/]\s*(\d{1,2})\s*[.\-/]\s*(\d{1,2})\s*(\(?\s*윤달\s*\)?)?")
 
@@ -75,7 +79,7 @@ Answer: <답>
 
         if atype == "ganji":
             ms = _GANJI_RE.findall(text) or _GANJI_RE.findall(response or "")
-            return ms[-1] if ms else None
+            return ms[-1].translate(_HANJA_TO_HANGUL) if ms else None
         if atype == "weekday":
             ms = _WEEKDAY_RE.findall(text) or _WEEKDAY_RE.findall(response or "")
             return ms[-1] if ms else None
