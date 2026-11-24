@@ -21,7 +21,7 @@ recipe file (--recipe configs/reference_calibration/<model>/<task>.json), whose
 tiers.<tier> entry holds n, seed_base and override or mix.
 
 Output: <out-dir>/<task>_<tier>.jsonl         (evaluation/run.py --data-dir compatible)
-        <out-dir>/<task>_<tier>.config.json   (resolved config, seeds, overlap check, generator hash)
+        <out-dir>/<task>_<tier>.config.json   (resolved config, seeds, overlap checks, generator hash)
 
 Usage:
   python scripts/build_reference_calibration_dataset.py \\
@@ -36,6 +36,7 @@ import copy
 import hashlib
 import json
 import random
+import re
 import subprocess
 import sys
 from pathlib import Path
@@ -158,19 +159,50 @@ def _generate(task, tier, cfg, n, seed_base, start=0):
     return items
 
 
+# Fields that identify a puzzle independently of its wording. cipher questions also carry a
+# random log sentence, so two items can be the same puzzle while their question text differs.
+_PUZZLE_KEY_PATTERNS = {
+    "cipher_en": (r"Ciphertext: '([^']+)'", r"Applied algorithms: (.+)"),
+    "cipher_ko": (r"암호문: '([^']+)'", r"적용된 알고리즘: (.+)"),
+}
+
+
+def _puzzle_key(task, item):
+    """(ciphertext, algorithms, answer) for cipher tasks; None for tasks without a defined key."""
+    patterns = _PUZZLE_KEY_PATTERNS.get(task)
+    if patterns is None:
+        return None
+    fields = []
+    for pat in patterns:
+        m = re.search(pat, item["question"])
+        if m is None:
+            raise ValueError(f"{item.get('id')}: puzzle-key field not found ({pat})")
+        fields.append(m.group(1).strip())
+    return (*fields, item["answer"])
+
+
 def _overlap_with_original(task, items, original_dir):
-    """Count generated questions that already appear in <original_dir>/<task>_<tier>.jsonl (any tier).
-    Returns None when none of the original files exist."""
-    seen, found = set(), 0
+    """Compare generated items with <original_dir>/<task>_<tier>.jsonl (any tier).
+
+    Returns (same_question, same_puzzle): the number of generated items whose question text, and
+    whose puzzle key (_puzzle_key), already appears in the original data. same_puzzle is None for
+    tasks without a puzzle key. Both are None when none of the original files exist."""
+    seen_q, seen_k, found = set(), set(), 0
     for t in TIERS:
         path = original_dir / f"{task}_{t}.jsonl"
         if path.exists():
             found += 1
             with open(path, encoding="utf-8") as f:
-                seen.update(json.loads(line)["question"] for line in f)
+                for line in f:
+                    orig = json.loads(line)
+                    seen_q.add(orig["question"])
+                    seen_k.add(_puzzle_key(task, orig))
     if found == 0:
-        return None
-    return sum(it["question"] in seen for it in items)
+        return None, None
+    same_question = sum(it["question"] in seen_q for it in items)
+    if task not in _PUZZLE_KEY_PATTERNS:
+        return same_question, None
+    return same_question, sum(_puzzle_key(task, it) in seen_k for it in items)
 
 
 def main():
@@ -233,7 +265,7 @@ def main():
            else _resolve_config(args.task, args.tier, override))
     items = _generate(args.task, args.tier, cfg, args.n, args.seed_base, args.start)
     n_unique = len({it["question"] for it in items})
-    overlap = _overlap_with_original(args.task, items, original_dir)
+    overlap, same_puzzle = _overlap_with_original(args.task, items, original_dir)
 
     out_dir = Path(args.out_dir)
     out_dir.mkdir(parents=True, exist_ok=True)
@@ -257,6 +289,7 @@ def main():
         "resolved_config": cfg,
         "unique_questions": n_unique,
         "overlap_with_original_data": overlap,
+        "same_puzzle_as_original_data": same_puzzle,
         "original_dir": str(original_dir),
         "git_commit": commit, "generation_dir_uncommitted_changes": dirty,
         "generator_file": str(gen_file.relative_to(PROJECT_ROOT)),
@@ -265,7 +298,8 @@ def main():
     with open(out_dir / f"{stem}.config.json", "w", encoding="utf-8") as f:
         json.dump(meta, f, ensure_ascii=False, indent=2, default=list)
     print(f"wrote {out_dir / (stem + '.jsonl')} n={args.n} unique={n_unique} "
-          f"overlap_with_original={overlap if overlap is not None else 'n/a (no original files)'}")
+          f"overlap_with_original={overlap if overlap is not None else 'n/a (no original files)'} "
+          f"same_puzzle_as_original={same_puzzle if same_puzzle is not None else 'n/a'}")
 
 
 if __name__ == "__main__":
